@@ -94,11 +94,23 @@ int main(int argc, char *argv[]) {
 
 		
 	}
-	// else
-	// {	//flag true
-	// 	//code
+	else{	//flag true
+	 	//code
+		FILE *pFile;
+		char ch;
 
-	//	}
+		//2
+		pFile = fopen(argv[1], "rb");
+		if (pFile == NULL){
+			perror("Reading error\n");
+			exit(1);
+		}
+		while ((ch = fgetc(filePointer)) != EOF)
+        {
+            printf("%c", ch);
+        }
+    }
+	}
 
 	return 0;
 }

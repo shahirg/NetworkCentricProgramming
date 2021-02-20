@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 		//pointer to file
 		FILE *pFile;
 		size_t sz = 0;
-		ssize_t len;
+		int len = 0;
 		char *line = NULL; //line
 
 		//open the file
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 
 		//for each line in the file...
 		//int *counter = (int *)malloc(numSubstrings * sizeof(int));
-		while ((len = getline(&line, &sz, pFile)) >0)
+		while ((len = getline(&line, &sz, pFile)) !=0)
 		{
 			printf("%s",line);
 			for(int i=0; i<(argc-2);i++) {   		
@@ -65,18 +65,19 @@ int main(int argc, char *argv[])
 				int substrlen=strlen(argv[i+2]);
 				for(int j=0;j<(strlen(line)-substrlen+1);j++)  {
 					char * substrofbuffer=(char*) malloc (sizeof(char)*substrlen);
-					strncpy(substrofbuffer,buffer+j,substrlen);
+					strncpy(substrofbuffer,line+j,substrlen);
 					if(strcasecmp(substrofbuffer,argv[i+2])==0) {
 						counter++;
 					}
 				}
-				printf("%d\n",counter)
+				printf("%d\n",counter);
 			}
 		}
 		free(line);
 		printf("hi");
-		for(int i = 0; i < numSubstrings; i++)
-			printf("%d\n", counter[i]);
+		//for(int i = 0; i < numSubstrings; i++)
+			//
+		//	printf("%d\n", counter[i]);
 
 		fclose(pFile);
 

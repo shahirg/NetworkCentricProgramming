@@ -26,16 +26,16 @@ int main(int argc, char* argv[]){
 	int numSubstrings = flag ? (argc - 3):(argc -2);
 
 	//create buffer for substrings
-	char* strBuffer=(char*) malloc (sizeof(char)*numSubstrings);
+	//char* strBuffer=(char*) malloc (sizeof(char)*numSubstrings);
 
-	for(int i = 0; i < numSubstrings; i++){
-		//get substrings based on weather or not flag
-		char* str = flag ? argv[i + 3]:argv[i + 2];
-		//lower case string to make case insensitive
-		for(char *p=str; *p; p++) 
-			*p = tolower(*p);
-		strBuffer[i] = str;
-	}
+	//for(int i = 0; i < numSubstrings; i++){
+	//	//get substrings based on weather or not flag
+	//	char* str = flag ? argv[i + 3]:argv[i + 2];
+	//	//lower case string to make case insensitive
+	//	for(char *p=str; *p; p++) 
+	//		*p = tolower(*p);
+	//	strBuffer[i] = str;
+	//}
 
 	if(!flag){
 		

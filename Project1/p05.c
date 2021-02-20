@@ -28,17 +28,6 @@ int main(int argc, char *argv[])
 	//number of string is dependent on weather or not there is a flag
 	int numSubstrings = flag ? (argc - 3) : (argc - 2);
 
-	//create buffer for substrings
-	//char* strBuffer=(char*) malloc (sizeof(char)*numSubstrings);
-
-	//for(int i = 0; i < numSubstrings; i++){
-	//	//get substrings based on weather or not flag
-	//	char* str = flag ? argv[i + 3]:argv[i + 2];
-	//	//lower case string to make case insensitive
-	//	for(char *p=str; *p; p++)
-	//		*p = tolower(*p);
-	//	strBuffer[i] = str;
-	//}
 
 	if (!flag)
 	{
@@ -48,7 +37,7 @@ int main(int argc, char *argv[])
 		// 	printf("File does not exist");
 		// 	return 1;
 		// }
-		unsigned int count = 0;
+		
 
 		//pointer to file
 		FILE *pFile;
@@ -64,55 +53,34 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
+
+
 		//for each line in the file...
-		int *counter = (int *)malloc(numSubstrings * sizeof(int));
+		//int *counter = (int *)malloc(numSubstrings * sizeof(int));
 		while ((len = getline(&line, &sz, pFile)) >0)
 		{
-
-			for (int i = 0; i < (numSubstrings); i++)
-			{
-
-				int substrlen = strlen(argv[i + 2]);
-				for (int j = 0; j < (strlen(line) - substrlen + 1); j++)
-				{
-					char *substrofbuffer = (char *)malloc(sizeof(char) * substrlen);
-					strncpy(substrofbuffer, line + j, substrlen);
-					if (strcasecmp(substrofbuffer, argv[i + 2]) == 0){
-						counter[i] += 1;
+			printf("%s",line);
+			for(int i=0; i<(argc-2);i++) {   		
+				int counter=0;
+				int substrlen=strlen(argv[i+2]);
+				for(int j=0;j<(strlen(line)-substrlen+1);j++)  {
+					char * substrofbuffer=(char*) malloc (sizeof(char)*substrlen);
+					strncpy(substrofbuffer,buffer+j,substrlen);
+					if(strcasecmp(substrofbuffer,argv[i+2])==0) {
+						counter++;
 					}
 				}
+				printf("%d\n",counter)
 			}
-
-			// //for each substring passed in
-
-			// for(int i = 0; i < size; i++){
-
-			// //get the substring
-			// char* substring =  buffer[i];
-
-			// //temp pointer to line in file
-			// const char* word = line;
-
-			// //strstr points to beginning of occurence of substring in string, otherwise returns null
-			// while((word = strstr(word,substring)) != NULL){
-			// 	count++;
-			// 	word++;
-			// }
-
-			// //print the count of the substring in the file for the word
-			// printf("%d\n",count);
-			// //put count back to zero
-			// count = 0;
-
-			// }
 		}
+		free(line);
 		printf("hi");
 		for(int i = 0; i < numSubstrings; i++)
 			printf("%d\n", counter[i]);
 
 		fclose(pFile);
 
-		free(line);
+		
 	}
 	else
 	{	//flag true
@@ -150,3 +118,26 @@ int main(int argc, char *argv[])
 // 	printf("%s",buffer);
 // }
 // fclose(pFile);
+
+
+
+			// //for each substring passed in
+
+			// for(int i = 0; i < size; i++){
+
+			// //get the substring
+			// char* substring =  buffer[i];
+
+			// //temp pointer to line in file
+			// const char* word = line;
+
+			// //strstr points to beginning of occurence of substring in string, otherwise returns null
+			// while((word = strstr(word,substring)) != NULL){
+			// 	count++;
+			// 	word++;
+			// }
+
+			// //print the count of the substring in the file for the word
+			// printf("%d\n",count);
+			// //put count back to zero
+			// count = 0;

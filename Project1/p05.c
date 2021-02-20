@@ -64,6 +64,20 @@ int main(int argc, char* argv[]){
 		while((len = getline(&line, &sz, pFile)) >= 0) {
 
 			printf("%s",line);
+			for(int i=0; i<(argc-2);i++) {   		
+				int counter=0;
+				int substrlen=strlen(argv[i+2]);
+				for(int j=0;j<(strlen(line)-substrlen+1);j++)  {
+					char * substrofbuffer=(char*) malloc (sizeof(char)*substrlen);
+					strncpy(substrofbuffer,buffer+j,substrlen);
+					if(strcasecmp(substrofbuffer,argv[i+2])==0) {
+						counter++;
+					}
+				}
+				printf("%d\n",counter)
+			}
+				
+
 			// //for each substring passed in
 			// for(int i = 0; i < size; i++){
 

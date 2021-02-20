@@ -5,12 +5,10 @@
 #include <ctype.h>
 #include <errno.h>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	// min number of for argc = 3
 	// exe <filename> <substringstring>
-	if (argc < 3)
-	{
+	if (argc < 3) {
 		perror("Not enough input arguements\n");
 		exit(1);
 	}
@@ -18,8 +16,7 @@ int main(int argc, char *argv[])
 	int flag = strcmp(argv[1], "--systemcalls") == 0 ? 1 : 0;
 
 	//min argc value if systemcall is 4 because you need file and
-	if (flag && argc < 4)
-	{
+	if (flag && argc < 4) {
 		perror("Not enough input arguements\n");
 		exit(1);
 	}
@@ -28,9 +25,18 @@ int main(int argc, char *argv[])
 	//number of string is dependent on weather or not there is a flag
 	int numSubstrings = flag ? (argc - 3) : (argc - 2);
 
+	char* strBuffer=(char*) malloc (sizeof(char)*numSubstrings);
 
-	if (!flag)
-	{
+	for(int i = 0; i < numSubstrings; i++){
+		//get substrings based on weather or not flag
+		char* str = flag ? argv[i + 3]:argv[i + 2];
+		//lower case string to make case insensitive
+		for(int j = 0;str[j];j++){
+        	str[j] = tolower(str[j]);
+        }
+		strBuffer[i] = str;
+	}
+	if (!flag) {
 
 		//check if file exists
 		// if(access(argv[1], F_OK) != 0){
@@ -42,13 +48,12 @@ int main(int argc, char *argv[])
 		//pointer to file
 		FILE *pFile;
 		size_t sz = 0;
-		int len = 0;
+		size_t len = 0;
 		char *line = NULL; //line
 
 		//open the file
 		pFile = fopen(argv[1], "rb");
-		if (pFile == NULL)
-		{
+		if (pFile == NULL){
 			perror("Reading error\n");
 			exit(1);
 		}
@@ -57,20 +62,26 @@ int main(int argc, char *argv[])
 
 		//for each line in the file...
 		//int *counter = (int *)malloc(numSubstrings * sizeof(int));
-		while ((len = getline(&line, &sz, pFile)) !=0)
-		{
+		while ((len = getline(&line, &sz, pFile)) >=0) {
 			printf("%s",line);
-			for(int i=0; i<(argc-2);i++) {   		
-				int counter=0;
-				int substrlen=strlen(argv[i+2]);
-				for(int j=0;j<(strlen(line)-substrlen+1);j++)  {
-					char * substrofbuffer=(char*) malloc (sizeof(char)*substrlen);
-					strncpy(substrofbuffer,line+j,substrlen);
-					if(strcasecmp(substrofbuffer,argv[i+2])==0) {
-						counter++;
-					}
+			for(int i=0; i<numSubstrings);i++) {   		
+				char* substring =  strb[i];
+
+				//temp pointer to line in file
+				const char* word = line;
+
+				//strstr points to beginning of occurence of substring in string, otherwise returns null
+				while((word = strstr(word,substring)) != NULL){
+					//increase count for each occurrence of substring found
+					count++;
+					//move up point for string
+					word++;
 				}
-				printf("%d\n",counter);
+
+				//print the count of the substring in the file for the word
+				printf("%d\n",count);
+				//put count back to zero
+				count = 0;
 			}
 		}
 		free(line);
@@ -83,10 +94,11 @@ int main(int argc, char *argv[])
 
 		
 	}
-	else
-	{	//flag true
-		//code
-	}
+	// else
+	// {	//flag true
+	// 	//code
+
+	//	}
 
 	return 0;
 }

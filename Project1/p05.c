@@ -61,24 +61,29 @@ int main(int argc, char* argv[]){
 		}
 
 		//for each line in the file...
-		while((len = getline(&line, &sz, pFile)) >= 0) {
+		int counter;
+		for(int i=0; i<(argc-2);i++) {   		
+			counter=0;
+			sz = 0;line = NULL;
+			while((len = getline(&line, &sz, pFile)) != -1) {
 
-			printf("%s",line);
-			for(int i=0; i<(argc-2);i++) {   		
-				int counter=0;
+				printf("sdfjk\n");
 				int substrlen=strlen(argv[i+2]);
 				for(int j=0;j<(strlen(line)-substrlen+1);j++)  {
 					char * substrofbuffer=(char*) malloc (sizeof(char)*substrlen);
-					strncpy(substrofbuffer,buffer+j,substrlen);
+					strncpy(substrofbuffer,line+j,substrlen);
 					if(strcasecmp(substrofbuffer,argv[i+2])==0) {
 						counter++;
 					}
 				}
-				printf("%d\n",counter)
+			
 			}
-				
-
+			
+			fclose(pFile);	
+			printf("test\n");
+			printf("%d\n",counter);
 			// //for each substring passed in
+			pFile = fopen(argv[1],"rb");
 			// for(int i = 0; i < size; i++){
 
 			// //get the substring
@@ -102,7 +107,9 @@ int main(int argc, char* argv[]){
 
 
 		}
-		free(line);
+		fclose(pFile);
+
+		free(line);		
 
 
 			

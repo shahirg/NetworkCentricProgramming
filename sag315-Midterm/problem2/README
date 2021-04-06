@@ -1,0 +1,30 @@
+Problem 2
+
+Running
+    Terminal 1
+    ./server
+
+    Terminal 2
+    ./client
+
+    Terminal 1 Output
+    Message sent to client
+
+    Terminal 2 Output
+    Network-Centric Programming – Spring 2021 Midterm
+
+Explantion
+    prob2_server.c:
+    for the server we needed to created open a create a socket and the fd corresponding
+    to it was serverfd. 
+    The socket then needed to be binded to an address which was defined to be on port 8080.
+    Then we listen for requests.
+    Once a request is accepted the message gets sent back to the client.
+    If any of the functions calls to socket, binf, listen, accept fail then we 
+    print an error and terminate the server.
+
+    prob2_client.c:
+    The client needs to use the same address and port as the server in order to make a connection to it
+    The client creates the socket then needs to convert the address to binary using inet_pton
+    The client then tries to connect to that address and then reads the message which is sent from server
+    If any of the function calls fail an appropriate error message is printed and the program terminates.

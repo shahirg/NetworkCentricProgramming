@@ -1,0 +1,10 @@
+Problem 3
+
+Running
+    ./main
+
+Explantion
+    An integer is instantiated to track the pid of the process.
+    fork() is then called and if the return value is < 0 we know the fork failed.
+    If the return value is 0 we are in the child process.
+    If the return value is anything else we are in the parent process.

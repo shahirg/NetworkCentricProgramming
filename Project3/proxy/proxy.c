@@ -104,6 +104,7 @@ int main(int argc, char **argv)
         Rio_readinitb(&rio, connfd);
         while (1)
         {
+            printf("hello\n");
             if ((n = Rio_readlineb_w(&rio, buf, MAXLINE)) <= 0)
             {
                 error = 1; //Used to fix a bug
@@ -206,6 +207,7 @@ int main(int argc, char **argv)
         /*
      * Forward the request to the end server
      */
+        printf("hello2\n");
         if ((serverfd = open_clientfd(hostname, serverport)) < 0)
         {
             printf("process_request: Unable to connect to end server.\n");
@@ -220,10 +222,13 @@ int main(int argc, char **argv)
         /*
      * Receive reply from server and forward on to client
      */
+
         Rio_readinitb(&rio, serverfd);
         response_len = 0;
+        printf("hello3\n");
         while ((n = Rio_readn_w(serverfd, buf, MAXLINE)) > 0)
         {
+            printf("helloe\n");
             response_len += n;
             Rio_writen_w(connfd, buf, n);
 #if defined(DEBUG)

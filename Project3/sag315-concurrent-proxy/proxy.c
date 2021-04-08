@@ -1,8 +1,8 @@
 /*
- * proxy.c - A Simple Sequential Web proxy
+ * proxy.c - A Concurrent Web proxy
  *
  * Course Name: 14:332:456-Network Centric Programming
- * Assignment 2
+ * Assignment 3
  * Student Name:Shahir Ghani
  * 
  * IMPORTANT: Give a high level description of your code here. You
@@ -31,22 +31,24 @@ typedef struct connection_data
     struct sockaddr_in clientaddr;
     int clientlen;
 } connection_data;
-/*
- * Functions not provided to the students
- */
-int open_clientfd(char *hostname, int port);
-ssize_t Rio_readn_w(int fd, void *ptr, size_t nbytes);
-ssize_t Rio_readlineb_w(rio_t *rp, void *usrbuf, size_t maxlen);
-void Rio_writen_w(int fd, void *usrbuf, size_t n);
+
+
 
 /*
  * Function prototypes
  */
 int parse_uri(char *uri, char *target_addr, char *path, int *port);
 void format_log_entry(char *logstring, struct sockaddr_in *sockaddr, char *uri, int size);
+int open_clientfd(char *hostname, int port);
+ssize_t Rio_readn_w(int fd, void *ptr, size_t nbytes);
+ssize_t Rio_readlineb_w(rio_t *rp, void *usrbuf, size_t maxlen);
+void Rio_writen_w(int fd, void *usrbuf, size_t n);
+/*
+ * Functions not provided to the students
+ */
 void *new_connection(void *_args);
 
-
+// Handles Signals given to program
 void sig_handler(int signo) {
     if (signo == SIGINT){ // eyboard intterupt
         printf("\nProxy Server closing\n");
@@ -70,7 +72,7 @@ int main(int argc, char **argv) {
     pthread_t tid;
 
     struct connection_data cdata; // connection struct for connfd, clientaddr, client len
-    int t;
+
     
     /* Check arguments */
     if (argc != 3){
@@ -97,9 +99,7 @@ int main(int argc, char **argv) {
     }
     printf("Listening on port %d\n", port);
 
-    /* Inititialize */
-    
-    
+
     for (;;){ // indefinite loop
 
         clientlen = sizeof(clientaddr);
@@ -114,8 +114,9 @@ int main(int argc, char **argv) {
         cdata.clientaddr= clientaddr;
         cdata.clientlen = clientlen;
         if (threading) {
-            Pthread_create(tid, NULL, &new_connection, (void *) &cdata);
-            pthread_detach(tid);
+            Pthread_create(&tid, NULL, &new_connection, (void *) &cdata);
+            Pthread_detach(tid);
+
         }
         else{
             p = Fork(); // create child
@@ -123,13 +124,18 @@ int main(int argc, char **argv) {
             if (p == 0) {
                 new_connection((void *) &cdata);
             }
-            close(connfd);
+            close(connfd);   
         }
+        printf("Request Count = %d\n", request_count);
 
     }
+    
     exit(0);
 }
-
+/*
+Function handles new connections being made to proxy server
+takes in struct connection_data as an arguement
+*/
 void *new_connection(void *_args)
 {
     // cdata store connfd, clientaddr, clientaddrlen
@@ -157,7 +163,7 @@ void *new_connection(void *_args)
 
     //print out the http request
     printf("\n%s %s %s\n", method, url, ext);
-    printf("ext: %s\n", ext);
+    //printf("ext: %s\n", ext);
 
     if (strncmp(method, "GET", strlen("GET")))
     {
@@ -168,7 +174,7 @@ void *new_connection(void *_args)
     char *host = strstr(url, "www");
     char *hostCopy = malloc(strlen(host) + 1);
     strcpy(hostCopy, host);
-    printf("\n%s %s\n", host, hostCopy);
+    //printf("\n%s %s\n", host, hostCopy);
 
     // get the www.<domain name>.<end> portion
     host = index(host, ':') == NULL ? (char *)strtok(host, "/") : (char *)strtok(host, ":");

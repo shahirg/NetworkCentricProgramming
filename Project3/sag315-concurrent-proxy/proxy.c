@@ -19,19 +19,18 @@
 
 #define SIZE 8192
 #define PROXY_LOG "proxy.log"
-#define MAX_THREADS 16
 
 /*
  * Globals
  */
 FILE *log_file; /* Log file with one line per HTTP request */
 
-typedef struct thread_data
+typedef struct connection_data
 {
     int connfd;
     struct sockaddr_in clientaddr;
     int clientlen;
-} tdata_t;
+} connection_data;
 /*
  * Functions not provided to the students
  */
@@ -45,46 +44,116 @@ void Rio_writen_w(int fd, void *usrbuf, size_t n);
  */
 int parse_uri(char *uri, char *target_addr, char *path, int *port);
 void format_log_entry(char *logstring, struct sockaddr_in *sockaddr, char *uri, int size);
+void *new_connection(void *_args);
 
-// Listens for keyboard interrupt
-void sig_handler(int signo)
-{
-    //prints that the program is closing
-    if (signo == SIGINT)
-    {
+
+void sig_handler(int signo) {
+    if (signo == SIGINT){ // eyboard intterupt
         printf("\nProxy Server closing\n");
         exit(EXIT_SUCCESS);
     }
 }
 
-void *new_connection(int connfd, struct sockaddr_in clientaddr, int clientlen)
-{
-    //int clientlen;           /* Size in bytes of the client socket address */
-    int request_count = 0; /* Number of requests received so far */
 
+/* 
+ * main - Main routine for the proxy program 
+ */
+int main(int argc, char **argv) {
+    int listenfd;                  /* The proxy's listening descriptor */
+    int port;                      /* The port the proxy is listening on */
+    int clientlen;                 /* Size in bytes of the client socket address */
+    int request_count = 0;         /* Number of requests received so far */
+    struct sockaddr_in clientaddr; /* Clinet address structure*/
+    int connfd;                    /* socket desciptor for talkign wiht client*/
+    int threading; // boolean for weather or not program is threading of forking
+    pid_t p;
+    pthread_t tid;
+
+    struct connection_data cdata; // connection struct for connfd, clientaddr, client len
+    int t;
+    
+    /* Check arguments */
+    if (argc != 3){
+        fprintf(stderr, "Usage Processes: %s <port number> -p\nUsage Threads: %s <port number> -t\n", argv[0], argv[0]);
+        exit(0);
+    }
+
+    // add SIGINT to the sig handler
+    // allows for termination of the proxy without killing terminal
+    signal(SIGINT, sig_handler);
+
+    // get port number
+    port = atoi(argv[1]);
+    printf("Port Num: %d\n", port);
+    
+    if (strcmp("-p", argv[2])){
+        threading = 1;
+    }
+
+    //int sockfd, clientfd;
+    // create socket
+    if ((listenfd = Open_listenfd(port)) < 0){
+        exit(1); //exit on error
+    }
+    printf("Listening on port %d\n", port);
+
+    /* Inititialize */
+    
+    
+    for (;;){ // indefinite loop
+
+        clientlen = sizeof(clientaddr);
+
+        //accept server connections
+        if ((connfd = Accept(listenfd, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen)) < 0)
+            exit(EXIT_FAILURE);
+        request_count++;
+
+        // pass parameters to connection struct
+        cdata.connfd = connfd; 
+        cdata.clientaddr= clientaddr;
+        cdata.clientlen = clientlen;
+        if (threading) {
+            Pthread_create(tid, NULL, &new_connection, (void *) &cdata);
+            pthread_detach(tid);
+        }
+        else{
+            p = Fork(); // create child
+            wait(NULL); // give control to child
+            if (p == 0) {
+                new_connection((void *) &cdata);
+            }
+            close(connfd);
+        }
+
+    }
+    exit(0);
+}
+
+void *new_connection(void *_args)
+{
+    // cdata store connfd, clientaddr, clientaddrlen
+    struct connection_data cdata = *((struct connection_data*) _args);
+    
+    
     int serverfd;            /* Socket descriptor for talking with end server */
     int response_len;        /* Total size in bytes of response from end server */
     int n;                   /* General index and counting variables */
     char *serverport;        /* Port number extracted from request URI (default 80) */
     char log_entry[MAXLINE]; /* Formatted log entry */
-
-    //rio_t rio;         /* Rio buffer for calls to buffered rio_readlineb routine */
     char buf[MAXLINE]; /* General I/O buffer */
 
-    //Used to fix a bug
-    //int error = 0; /* Used to detect error in reading requests */
     char *httpString = " HTTP/1.0\r\n\r\n";
     struct flock lock;
 
-    recv(connfd, buf, MAXBUF, 0);
+    recv(cdata.connfd, buf, MAXBUF, 0);
 
     char url[5000], method[100], ext[1000];
     //url ex http://www.example.com/
     //method = GET
     //ext ex = HTTP/1.1
 
-    //listen for a request
-    sscanf(buf, "%s %s %s", method, url, ext);
+    sscanf(buf, "%s %s %s", method, url, ext); //listen for a request
 
     //print out the http request
     printf("\n%s %s %s\n", method, url, ext);
@@ -93,7 +162,7 @@ void *new_connection(int connfd, struct sockaddr_in clientaddr, int clientlen)
     if (strncmp(method, "GET", strlen("GET")))
     {
         printf("process_request: Received non-GET request\n");
-        close(connfd);
+        close(cdata.connfd);
     }
 
     char *host = strstr(url, "www");
@@ -108,19 +177,15 @@ void *new_connection(int connfd, struct sockaddr_in clientaddr, int clientlen)
 
     //check if a port is specified
     serverport = NULL;
-    // cut off the first /
-    serverport = (char *)strtok(hostCopy, "/");
-    //cut off before the :
-    serverport = (char *)strstr(hostCopy, ":");
+    serverport = (char *)strtok(hostCopy, "/"); // cut off the first /
+    serverport = (char *)strstr(hostCopy, ":"); // cut off before the :
 
-    //no port default to port 80
-    if (serverport == NULL)
-    {
-        if ((serverfd = open_clientfd(host, 80)) < 0)
+    
+    if (serverport == NULL){ // no port default to port 80
+        if ((serverfd = open_clientfd(host, 80)) < 0) 
             exit(EXIT_FAILURE);
     }
-    else
-    {
+    else{
         ++serverport; //cut off first character ex: :80 -> 80
         if ((serverfd = open_clientfd(host, atoi(serverport))) < 0)
             exit(EXIT_FAILURE);
@@ -133,221 +198,36 @@ void *new_connection(int connfd, struct sockaddr_in clientaddr, int clientlen)
 
     response_len = 0;
     // get result
-    while ((n = Rio_readn(serverfd, buf, MAXLINE)) > 0)
-    {
+    while ((n = Rio_readn(serverfd, buf, MAXLINE)) > 0){
         response_len += n;
-        Rio_writen(connfd, buf, n);
-        // print out http response
-        // printf("HTTP RESPONSE:\n%s\n", buf);
-        // clear buffer
-        bzero(buf, MAXLINE);
+        Rio_writen(cdata.connfd, buf, n);      
+        bzero(buf, MAXLINE); // clear buffer
     }
 
-    /* init the flock struct */
-    memset(&lock, 0, sizeof(lock));
-    //lock file
-    lock.l_type = F_WRLCK;
+   
+    memset(&lock, 0, sizeof(lock));  /* init the flock struct */
+    
+    log_file = Fopen(PROXY_LOG, "a"); // open logfile
+    
+    lock.l_type = F_WRLCK; // lock file
     fcntl(fileno(log_file), F_SETLKW, &lock);
 
     // logging functionality
-    format_log_entry(log_entry, &clientaddr, host, response_len);
+    format_log_entry(log_entry, &cdata.clientaddr, host, response_len);
     printf("%s\n", log_entry);
     // print log to file is it opens
-    fprintf(log_file, "%s\n", log_entry);
+    fprintf(log_file, "%s\n", log_entry); // write to logfile
     fflush(log_file);
 
     //unlock file
     lock.l_type = F_UNLCK;
     fcntl(fileno(log_file), F_SETLKW, &lock);
+    close(fileno(log_file)); // close  log file
 
     // close
     //close(connfd);
     close(serverfd);
     return NULL;
-}
-/* 
- * main - Main routine for the proxy program 
- */
-int main(int argc, char **argv)
-{
-    int listenfd;                  /* The proxy's listening descriptor */
-    int port;                      /* The port the proxy is listening on */
-    int clientlen;                 /* Size in bytes of the client socket address */
-    int request_count = 0;         /* Number of requests received so far */
-    struct sockaddr_in clientaddr; /* Clinet address structure*/
-    int connfd;                    /* socket desciptor for talkign wiht client*/
-    // int serverfd;                  /* Socket descriptor for talking with end server */
-    // char *request;                 /* HTTP request from client */
-    // char *request_uri;             /* Start of URI in first HTTP request header line */
-    // char *request_uri_end;         /* End of URI in first HTTP request header line */
-    // char *rest_of_request;         /* Beginning of second HTTP request header line */
-    // int request_len;  /* Total size of HTTP request */
-    // int response_len; /* Total size in bytes of response from end server */
-    // int n;            /* General index and counting variables */
-    // int realloc_factor; /* Used to increase size of request buffer if necessary */
-
-    //char hostname[MAXLINE];  /* Hostname extracted from request URI */
-    //char pathname[MAXLINE];  /* Content pathname extracted from request URI */
-    // char *serverport;        /* Port number extracted from request URI (default 80) */
-    // char log_entry[MAXLINE]; /* Formatted log entry */
-
-    //rio_t rio;         /* Rio buffer for calls to buffered rio_readlineb routine */
-    // char buf[MAXLINE]; /* General I/O buffer */
-
-    //Used to fix a bug
-    //int error = 0; /* Used to detect error in reading requests */
-    int threading;
-    // char *httpString = " HTTP/1.0\r\n\r\n";
-    // char url[5000], method[100], ext[1000];
-    pid_t p;
-    pthread_t *tid;
-    struct tdata_t *tdata;
-
-    int t;
-
-    /* Check arguments */
-    if (argc != 3)
-    {
-        fprintf(stderr, "Usage Processes: %s <port number> -p\nUsage Processes: %s <port number> -p\n", argv[0], argv[0]);
-        exit(0);
-    }
-
-    // add SIGINT to the sig handler
-    // allows for termination of the proxy without killing terminal
-    signal(SIGINT, sig_handler);
-
-    // get port number
-    port = atoi(argv[1]);
-    printf("Port Num: %d\n", port);
-
-    if (strcmp("-p", argv[2]))
-    {
-        threading = 1;
-    }
-
-    //int sockfd, clientfd;
-    // create socket
-    if ((listenfd = Open_listenfd(port)) < 0)
-    {
-        exit(1); //exit on error
-    }
-    printf("Listening on port %d\n", port);
-
-    /* Inititialize */
-    log_file = Fopen(PROXY_LOG, "a");
-    if (threading)
-    {
-        //100 conncurrent users
-        tid = malloc(sizeof(pthread_t) * 100);
-        t = 0;
-    }
-    // indefinite loop
-    for (;;)
-    {
-
-        clientlen = sizeof(clientaddr);
-
-        //accept server connections
-        if ((connfd = Accept(listenfd, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen)) < 0)
-            exit(EXIT_FAILURE);
-
-        if (threading)
-        {
-            tdata = (tdata_t *)malloc(sizeof(tdata_t));
-
-            Pthread_create(tid[t], NULL, &new_connection, NULL);
-            t = t == MAX_THREADS ? 0 : t + 1;
-        }
-        else
-        {
-            p = Fork();
-            wait(NULL);
-            if (p == 0)
-            {
-                new_connection(connfd, clientaddr, clientlen);
-            }
-            close(connfd);
-        }
-
-        // recv(connfd, buf, MAXBUF, 0);
-
-        // //url ex http://www.example.com/
-        // //method = GET
-        // //ext ex = HTTP/1.1
-
-        // //listen for a request
-        // printf("buf = %s\n", buf);
-        // sscanf(buf, "%s %s %s", method, url, ext);
-
-        // //print out the http request
-        // printf("\n%s %s %s\n", method, url, ext);
-
-        // if (strncmp(method, "GET", strlen("GET")))
-        // {
-        //     printf("process_request: Received non-GET request\n");
-        //     close(connfd);
-        //     break;
-        // }
-
-        // char *host = strstr(url, "www");
-        // char *hostCopy = malloc(strlen(host) + 1);
-        // strcpy(hostCopy, host);
-        // printf("\n%s %s\n", host, hostCopy);
-
-        // // get the www.<domain name>.<end> portion
-        // host = index(host, ':') == NULL ? (char *)strtok(host, "/") : (char *)strtok(host, ":");
-
-        // printf("\nhost=%s\n", host);
-
-        // //check if a port is specified
-        // serverport = NULL;
-        // // cut off the first /
-        // serverport = (char *)strtok(hostCopy, "/");
-        // //cut off before the :
-        // serverport = (char *)strstr(hostCopy, ":");
-
-        // //no port default to port 80
-        // if (serverport == NULL)
-        // {
-        //     if ((serverfd = open_clientfd(host, 80)) < 0)
-        //         exit(EXIT_FAILURE);
-        // }
-        // else
-        // {
-        //     ++serverport; //cut off first character ex: :80 -> 80
-        //     if ((serverfd = open_clientfd(host, atoi(serverport))) < 0)
-        //         exit(EXIT_FAILURE);
-        // }
-
-        // // send GET request to server
-        // Rio_writen(serverfd, "GET ", strlen("GET "));
-        // Rio_writen(serverfd, url, strlen(url));
-        // Rio_writen(serverfd, httpString, strlen(httpString));
-
-        // response_len = 0;
-        // // get result
-        // while ((n = Rio_readn(serverfd, buf, MAXLINE)) > 0)
-        // {
-        //     response_len += n;
-        //     Rio_writen(connfd, buf, n);
-        //     // print out http response
-        //     // printf("HTTP RESPONSE:\n%s\n", buf);
-        //     // clear buffer
-        //     bzero(buf, MAXLINE);
-        // }
-
-        // // logging functionality
-        // format_log_entry(log_entry, &clientaddr, host, response_len);
-        // printf("%s\n", log_entry);
-        // // print log to file is it opens
-        // fprintf(log_file, "%s\n", log_entry);
-        // fflush(log_file);
-
-        // // close
-        // close(connfd);
-        // close(serverfd);
-    }
-    exit(0);
 }
 
 /*

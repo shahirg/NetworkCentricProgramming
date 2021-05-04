@@ -1,0 +1,16 @@
+problem 1
+
+Running with Systemcall
+    ./write --systemcalls
+    ./read --systemcalls
+
+Running with fileio
+    ./write
+    ./read
+
+
+for running prob1_read.c the code takes in one command line arg --systemcalls
+if the arg is given then the program will use system calls to complete the perform the read or else it will 
+use fileio
+
+for running prob1_write.

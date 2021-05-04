@@ -1,0 +1,29 @@
+****************
+CS:APP Proxy Lab
+****************
+
+Makefile	- For building proxy
+README		- This file
+
+# Proxy source files
+proxy.{c,h}	- Primary proxy code
+csapp.{c,h}	- Wrapper and helper functions from the CS:APP text
+
+
+Running:
+Threading:          ./proxy <port> -t
+Multiprocessing:    ./proxy <port> -p
+
+Explanation:
+The program has a boolean called threading. 
+if threading = 1 then the proxy uses threads for concurrency
+if threading = 0 then the proxy uses multiple process for concurrency
+In general I used my code from project 2 and made modifications.
+All the code that happens after a new connection is made was stored in a new function
+called new_connection.
+new_connection takes in an argument which is of type struct connection_data
+connection_data stores the connfd, clientaddr, and clientlen
+the function process the response and when wrting to the logfile it locks it for writing.
+When writing is completed the logfile is unlocked.
+Locking and unlocking is done using flock
+The program compiles with no errors or warnings and also handles non -GET requests safely

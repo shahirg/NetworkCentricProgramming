@@ -1,0 +1,17 @@
+****************
+CS:APP Proxy Lab
+****************
+
+Makefile	- For building proxy
+README		- This file
+
+# Proxy source files
+proxy.{c,h}	- Primary proxy code
+csapp.{c,h}	- Wrapper and helper functions from the CS:APP text
+
+
+I tested the code how it was shown on piazza with firefox and example.com
+The logging functionality works and for the most part I believe all of the parts are working
+I used print statements at various steps to show what was going on
+A segmnetation fault will occur from  my knowledge if the proxy recieves a POST request
+Terminate the program with a keyboard interrupt and it should pring that the proxy is closing

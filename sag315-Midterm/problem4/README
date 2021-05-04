@@ -1,0 +1,13 @@
+Problem 4
+
+Running
+    ./main
+
+Explantion
+
+    For this problem i created two void functions for each of the two threads.
+    Each of these functions prints out the requested line saying that the thread was created.
+    The main functions prints that it is the main thread.
+    When the threads are creted if the reutrn value != 0 we know that the thread creation is 
+    failed so the program terminates.
+    The program calls pthread_join to then terminate the threads at after they are completed.

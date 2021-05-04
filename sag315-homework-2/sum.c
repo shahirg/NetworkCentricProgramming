@@ -14,9 +14,6 @@ typedef struct data{
 int sum(int start, int end, int total);
 void* split_sum(void* s);
 int main(int argc, char **argv) {
-    
-    
-
     // check input args
     if(!(argc == 1) && !(argc ==3)){
         perror("usage: ./sum\nusage: ./sum <start> <end>\n");
@@ -36,7 +33,6 @@ int main(int argc, char **argv) {
         thread_data[i].thread_num = i;
         thread_data[i].start = i == 0 ? start + split* i : thread_data[i-1].end +1;
         thread_data[i].end = i != NUM_THREADS -1 ? start + split * (i+1) : end;
-        printf("i = %d: start =  %d end = %d\n", i , thread_data[i].start, thread_data[i].end);
         if((pthread_create(&tid[i],NULL,&split_sum, &thread_data[i])) != 0){
             fprintf(stderr,"Error Creating Thread");
             exit(-1);
